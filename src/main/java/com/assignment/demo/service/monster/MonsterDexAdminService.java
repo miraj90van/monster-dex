@@ -105,9 +105,9 @@ public class MonsterDexAdminService {
      * @return Mono<BaseResponse<Boolean>>
      */
     public Mono<BaseResponse<Boolean>> deleteMonsterDex(long id){
-        return monsterDexRepository.deleteById(id)
-            .then(monsterDexStatRepository.deleteByMonsterDexId(id))
-            .then(monsterDexTypeRepository.deleteByMonsterDexId(id))
+        return deleteByMonsterDexId(id)
+            .flatMap(aBoolean -> deleteByMonsterDexStat(id))
+            .flatMap(aBoolean -> deleteByMonsterDexType(id))
             .as(operator::transactional)
             .map(response -> new BaseResponse<>(ResponseType.SUCCESS, true))
             .onErrorResume(throwable -> {
@@ -140,6 +140,13 @@ public class MonsterDexAdminService {
         monsterDexExist.setHeight(request.getHeight());
         monsterDexExist.setWeight(request.getWeight());
         return monsterDexExist;
+    }
+
+    private Mono<Boolean> deleteByMonsterDexId(long id){
+        Mono<Boolean> result = Mono.just(true);
+        return monsterDexRepository.deleteById(id)
+            .then(result)
+            .onErrorResume(throwable -> Mono.just(false));
     }
 
     private Mono<Boolean> deleteByMonsterDexStat(long id){
